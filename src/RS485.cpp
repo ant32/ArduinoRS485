@@ -90,9 +90,16 @@ int RS485Class::peek()
   return _serial->peek();
 }
 
+bool need_to_ignore_the_next_byte_we_see=false;
+
 int RS485Class::read(void)
 {
-  return _serial->read();
+  auto b = _serial->read();
+  if( need_to_ignore_the_next_byte_we_see ) {
+    need_to_ignore_the_next_byte_we_see = false;
+    while(b==0) b = _serial->read();
+  }
+  return b;
 }
 
 void RS485Class::flush()
@@ -102,6 +109,7 @@ void RS485Class::flush()
 
 size_t RS485Class::write(uint8_t b)
 {
+  need_to_ignore_the_next_byte_we_see=true;
   if (!_transmisionBegun) {
     setWriteError();
     return 0;
